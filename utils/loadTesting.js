@@ -7,7 +7,7 @@ const moment = require('moment')
 const ora = require('ora')
 
 const startLoadTesting = (configFile, localSchema) => {
-  const { config: { url, name } } = require(configFile)
+  const { config: { url, name, headers } } = require(configFile)
 
   const schemaPath = artilleryConfigPath('schema.gql')
 
@@ -19,8 +19,9 @@ const startLoadTesting = (configFile, localSchema) => {
       startLoadTestingCallBack(err, configFile, spinner)
     })
   } else {
+    const headersOpt = Object.entries(headers).map(([k, v]) => `-h "${k}=${v}"`).join(" ")
     // Download a copy of the schema to be tested.
-    exec(`npx get-graphql-schema ${url} > ${schemaPath}`, (err) => {
+    exec(`npx get-graphql-schema ${headersOpt} ${url} > ${schemaPath}`, (err) => {
       startLoadTestingCallBack(err, configFile, spinner)
     })
   }
@@ -63,14 +64,14 @@ const runLoadTesting = (configFile, spinner) => {
 
     const configOverride = {
       config: {
-        phases: [{duration, arrivalRate }]
+        phases: [{ duration, arrivalRate }]
       }
     }
-    
+
     if (headers) {
       configOverride['config']['defaults'] = {
         headers
-      }    
+      }
     }
 
     options = options.concat(['--overrides', `'${JSON.stringify(configOverride)}'`])
@@ -104,7 +105,7 @@ const runLoadTesting = (configFile, spinner) => {
         }
         console.log('Thanks for using easygraphql-lt 🔥')
       }
-     
+
       deleteArgsFile('config.json')
       deleteArgsFile('schema.gql')
     })
